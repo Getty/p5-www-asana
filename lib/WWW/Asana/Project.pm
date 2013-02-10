@@ -10,6 +10,7 @@ with 'WWW::Asana::Role::NewFromResponse';
 with 'WWW::Asana::Role::HasFollowers';
 with 'WWW::Asana::Role::HasStories';
 
+with 'WWW::Asana::Role::CanCreate';
 with 'WWW::Asana::Role::CanReload';
 with 'WWW::Asana::Role::CanUpdate';
 
@@ -32,6 +33,8 @@ sub value_args {
 		$self->has_notes ? ( notes => $self->notes ) : (),
 	};
 }
+
+sub opt_fields { qw( created_at modified_at name notes ) }
 
 has id => (
 	is => 'ro',
@@ -76,5 +79,7 @@ has workspace => (
 	},
 	predicate => 1,
 );
+
+with 'WWW::Asana::Role::HasTasks';
 
 1;

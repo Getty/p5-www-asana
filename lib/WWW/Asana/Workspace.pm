@@ -21,6 +21,8 @@ sub update_args {
 	}
 }
 
+sub opt_fields { qw( name ) }
+
 use WWW::Asana::Task;
 
 =attr id
@@ -80,32 +82,49 @@ sub tags {
 	$self->do('[Tag]', 'GET', $self->own_base_args, 'tags', sub { workspace => $self });
 }
 
-=method create_tag
+=method create_tag({name => "tag name", notes=>"tag notes", ...} | "just the tag name")
 
-Adds the given first parameter as new tag for the workspace, it gives back a
+Adds the given first parameter as new tag for the workspace. It gives back a
 L<WWW::Asana::Tag> of the resulting tag.
 
 =cut
 
 sub create_tag {
-	my ( $self, $name ) = @_;
-	if (ref $name eq 'WWW::Asana::Tag') {
-		die "Given WWW::Asana::Tag has id, and so is already created" if $name->has_id;
-		$name = $name->name;
-	}
-	$self->do('Tag', 'POST', $self->own_base_args, 'tags', { name => $name });
+	my ( $self, $arg ) = @_;
+	$arg = { name => $arg } if not ref $arg;
+	unless (ref $arg eq "HASH") { die "create_tag() expects a hash of name=>..., notes=>..."; }
+	$arg->{workspace} = $self;
+	$arg->{client} = $self->client if $self->has_client;
+	return WWW::Asana::Tag->new(%$arg)->create;
 }
 
-=method create_task
+=method create_task ({name=>...,notes=>...})
+
+Adds a new task to the workspace.
+
 =cut
 
 sub create_task {
 	my ( $self, $attr ) = @_;
-	die __PACKAGE__."->new_task needs a HashRef as parameter" unless ref $attr eq 'HASH';
+	die __PACKAGE__."->create_task needs a HashRef as parameter" unless ref $attr eq 'HASH';
 	my %data = %{$attr};
 	$data{workspace} = $self;
 	$data{client} = $self->client if $self->has_client;
 	return WWW::Asana::Task->new(%data)->create;
+}
+
+=method create_project ({name=>...,notes=>...})
+
+Adds a new project to the workspace.
+
+=cut
+
+sub create_project {
+	my ( $self, $attr ) = @_;
+	die __PACKAGE__."->create_project needs a HashRef as parameter" unless ref $attr eq 'HASH';
+	$attr->{workspace} = $self;
+	$attr->{client} = $self->client if $self->has_client;
+	return WWW::Asana::Project->new(%$attr)->create;
 }
 
 1;
